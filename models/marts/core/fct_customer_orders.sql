@@ -1,40 +1,40 @@
 with
 
 customers as (
-    select * from {{ source('jaffle_shop', 'customers') }}
+    select * from {{ ref('stg_customers') }}
 ),
 
 orders as (
-    select * from {{ source('jaffle_shop', 'orders') }}
+    select * from {{ ref('stg_orders') }}
 ),
 
 payments as (
-    select * from {{ source('stripe', 'payment') }}
+    select * from {{ ref('stg_payments') }}
 ),
 
-paid_orders as (select orders.id as order_id,
-    orders.user_id	as customer_id,
+paid_orders as (select orders.order_id as order_id,
+    orders.customer_id	as customer_id,
     orders.order_date as order_placed_at,
-        orders.status as order_status,
+        orders.order_status as order_status,
     p.total_amount_paid,
     p.payment_finalized_date,
     c.first_name    as customer_first_name,
         c.last_name as customer_last_name
 from orders
-left join (select orderid as order_id, max(created) as payment_finalized_date, sum(amount) / 100.0 as total_amount_paid
+left join (select order_id as order_id, max(created_at) as payment_finalized_date, sum(payment_amount) as total_amount_paid
         from payments
-        where status <> 'fail'
-        group by 1) p on orders.id = p.order_id
-left join customers c on orders.user_id = c.id ),
+        where payment_status <> 'fail'
+        group by 1) p on orders.order_id = p.order_id
+left join customers c on orders.customer_id = c.customer_id ),
 
 customer_orders 
-as (select c.id as customer_id
+as (select c.customer_id as customer_id
     , min(order_date) as first_order_date
     , max(order_date) as most_recent_order_date
-    , count(orders.id) as number_of_orders
+    , count(orders.order_id) as number_of_orders
 from customers c 
 left join orders
-on orders.user_id = c.id 
+on orders.customer_id = c.customer_id 
 group by 1)
 
 select
