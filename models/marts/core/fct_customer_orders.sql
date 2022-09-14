@@ -1,15 +1,15 @@
 with
 
 customers as (
-    select * from raw.jaffle_shop.customers
+    select * from {{ source('jaffle_shop', 'customers') }}
 ),
 
 orders as (
-    select * from raw.jaffle_shop.orders
+    select * from {{ source('jaffle_shop', 'orders') }}
 ),
 
 payments as (
-    select * from raw.stripe.payment
+    select * from {{ source('stripe', 'payment') }}
 ),
 
 paid_orders as (select orders.id as order_id,
