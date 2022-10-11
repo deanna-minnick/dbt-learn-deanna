@@ -5,9 +5,6 @@ source as (
     select * from {{ source ('stripe', 'payment') }}
 ),
 
-
-
-
 transformed as (
 
     select
